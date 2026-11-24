@@ -9,9 +9,6 @@ Full details in:
 
 If you use this work, please cite the following paper:
 
-APA:
-============
+## APA:
 
-
-BibTeX:
-=============
+## BibTeX:
