@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>XPOS TESTER for Ancient Greek AI Models (ONNX)</title>
+    <style type="text/css">
+		html, body, main {
+		   margin: auto;
+		   height: 100%;
+		}
+		
+		main {
+			padding-left: 1vw;
+			padding-right: 1vw;
+		}
+		
+		h1, h3 {
+			position: sticky;
+			top: 0px;
+		   margin: auto;
+		   padding: .3vw;
+		}
+		
+		h1, h2, h3, h4, #args {
+			text-align: center;
+		}
+		
+		h4 {
+			font-weight: initial;
+			margin: 1vw;
+		}
+		    
+		#args {
+			display: flex;
+			align-items: center;
+		}
+		    
+		#args>div {
+			text-align: center;
+			margin: 1vw;
+			background-color: #f9f9f9;
+			border-radius: 8px;
+		}
+		
+		#test {
+		    background-color: lavender;
+		    border-radius: 8px 8px 0px 0px;
+		}
+		
+		:has(>#result), #result_types {
+			display: flex;
+			background-color: lightyellow;		    
+		}
+
+		:has(>#result) {
+			max-height: 50vh;
+			overflow-y: scroll;
+			border: .2em inset;
+		}
+		
+		#result, #result2, #result_types>* {
+			width: 50%;
+			height: 100%;
+			border: 1.2px double grey;
+			margin-top: 0px;
+		}
+		
+		button {cursor: pointer;}
+		
+    </style>
+   </head>
+  <body>
+    <header></header>
+    <main>
+    <h1>Real-world <a href="https://github.com/PerseusDL/treebank_data/tree/master/AGDT2/guidelines">XPOS</a> TESTER for Ancient Greek AI Models (ONNX)</h1>
+    <h3 id="version">Powered locally by <a href="https://huggingface.co/docs/transformers.js/index">Transformers.js</a> v<span></span></h3>
+    <h4>set by <a href="https://orcid.org/0000-0002-4147-2907">Vincenzo Muggittu</a> - License: <a href="https://www.apache.org/licenses/LICENSE-2.0.txt">Apache-2.0</a></h4>
+    <h4>Special thanks to <a href="https://github.com/Heidelberg-NLP/ancient-language-models">GreBERTa</a>'s makers</h4>
+    <form id="test">
+	    <div id="args">
+		    <div>
+		    	AI Model (you can use also IDs of compatible <a href="https://onnx.ai/">ONNX</a> models hosted by <a href="https://huggingface.co/models">Hugging Face</a>): 
+		    	<input id="model" type="text" value="muggysdigital/GreBerta-Perseus-ONNX"/><!-- (alt) value="greberta-perseus-onnx" -->
+		    </div>
+		    <div>
+		    	word aggregation strategy: 
+		    	<select id="aggregation">
+		    		<option value="none">none</option>
+		    		<option value="simple">simple</option>
+		    		<!-- STILL UNAVAILABLE IN JS: -->
+		    		<!-- <option value="average">average</option>
+		    		<option value="first">first</option>
+		    		<option value="max">max</option> -->
+		    	</select>
+		    </div>
+		    <div>
+		    	Ancient Greek text: 
+		    	<textarea id="text" maxlength="500"></textarea>
+		    </div>
+		    <div><button id="analyze" type="button"><b>TEST!</b></button></div>
+	    </div>
+	    </form>
+    <div><pre id="result"></pre><pre id="result2"></pre></div>
+    </main>
+    <footer></footer>
+    <script type="module">
+        import { env, pipeline, AutoTokenizer, AutoModelForTokenClassification } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers'; //ONLINE
+        //import { env, pipeline, AutoTokenizer, AutoModelForTokenClassification } from './js/transformers/dist/transformers.js'; //OFFLINE
+        env.localModelPath = 'models/';
+        
+		// Helper function to compute softmax in pure JS
+		function softmax(logits) {
+		    const maxLogit = Math.max(...logits),
+		    	scores = logits.map(l => Math.exp(l - maxLogit)),
+		    	sum = scores.reduce((a, b) => a + b, 0);
+		    return scores.map(s => s / sum);
+		}
+		
+		async function test(rawText, modelName) {
+		    const text = rawText,
+		    	 aggregationOpt = document.getElementById("aggregation").value,
+	    	 	followProgress = (info) => {
+					if (info.status==="progress_total") {
+						let progBar,
+							result1 = document.getElementById("result"),
+							result2 = document.getElementById("result2");
+						if (!(progBar = document.querySelector("#result2>progress"))) {
+							progBar = document.createElement("progress");
+							progBar.max = 104;
+							progBar.style.width = "98%";
+							result1.textContent = "";
+							result2.textContent = "";
+							result2.appendChild(progBar);
+						}
+						progBar.value = info.progress;
+					}
+				},
+				pipelineConfig = {
+					dtype: 'fp32',//REPLACES quantized: false,//NOT DEFAULT in transformers.js
+					progress_callback: followProgress,
+					device: 'webgpu', //offloads memory usage to the GPU
+				};
+
+		   if (!/\//.test(document.getElementById("model").value)) {//prevent from mixing up offline mode and online mode
+				env.allowLocalModels = true;//NOT DEFAULT in transformers.js
+				env.allowRemoteModels = false;//NOT DEFAULT in transformers.js
+				pipelineConfig.subfolder = '';//NOT DEFAULT in transformers.js
+			}
+			else {
+				env.allowLocalModels = false;
+				env.allowRemoteModels = true;
+				pipelineConfig.subfolder = 'onnx';
+			}
+
+			let finalResults = [];
+		    
+			if (aggregationOpt != "none") {//simplified mode
+				const classifier = await pipeline('token-classification', modelName, pipelineConfig);
+				finalResults = await classifier(text, {
+					aggregation_strategy: aggregationOpt,
+				});
+				//console.log(finalResults);
+			}
+			else {
+				// 1. Load tokenizer and model locally
+				const tokenizer = await AutoTokenizer.from_pretrained(modelName),
+					model = await AutoModelForTokenClassification.from_pretrained(modelName, pipelineConfig),
+
+			    // 2. Prepare batch inputs (native vs. leading space)
+					textsBatch = [text, " " + text],
+					inputs = await tokenizer(textsBatch, {
+						padding: true,
+						add_special_tokens: true,
+					});
+			
+			    // 3. Run model inference
+			    const outputs = await model(inputs);
+			
+			    // Extract batch dimensions: [batch_size, sequence_length, num_labels]
+			    const [batchSize, seqLen, numLabels] = outputs.logits.dims,
+			    	logitsData = outputs.logits.data,
+			    	inputIdsData = inputs.input_ids.data;
+			
+			    // Helper to slice a single batch item's 2D logits and 1D input_ids
+			    function getBatchItem(batchIndex) {
+			        const logits2D = [],
+			        	ids1D = [],
+			        	startOffset = batchIndex * seqLen;
+			
+			        for (let i = 0; i < seqLen; i++) {
+			            ids1D.push(Number(inputIdsData[startOffset + i]));
+			            const rowStart = (startOffset + i) * numLabels;
+			            logits2D.push(Array.from(logitsData.slice(rowStart, rowStart + numLabels)));
+			        }
+			        return { logits2D, ids1D };
+			    };
+			
+			    // 4. Helper to manage word re-aggregation. Equivalent of Python's process_logits function
+				function processLogits(logits2D, ids1D, alsoOriginal) {
+				    const words = [],
+				    	original = [];
+				    let currentWordTokens = [],
+				    	currentWordXpos = null,
+				    	currentWordScore = 1.0;
+				
+				    const specialTokenIds = new Set(
+				        [
+							tokenizer.cls_token_id,
+							tokenizer.sep_token_id,
+							tokenizer.pad_token_id,
+							tokenizer.bos_token_id,
+							tokenizer.eos_token_id,
+				        ].filter(id => id !== undefined && id !== null)
+				    );
+				
+				    const punctuationRegex = /^[\p{P}\p{S}]+$/u;// (of course includes Ancient Greek ; · )
+				
+				    // function to push the current (tokens | grapheme clusters) group, re-aggregated as single token, into the "words" array
+				    function flushCurrentWord() {
+				        if (currentWordTokens.length > 0) {
+				            const decodedWord = tokenizer.decode(currentWordTokens, { skip_special_tokens: true }).trim();
+				            if (decodedWord) {
+				                words.push({
+				                    word: decodedWord,
+				                    entity_group: currentWordXpos,
+				                    score: currentWordScore
+				                });
+				            }
+				            currentWordTokens = [];
+				            currentWordXpos = null;
+				            currentWordScore = 1.0;
+				        }
+				    }
+				
+				    for (let idx = 0; idx < ids1D.length; idx++) {
+				        const tokenId = ids1D[idx];
+				
+				        // 1. special tokens escape (<s>, </s>, <pad>)
+				        if (specialTokenIds.has(tokenId)) {
+				            continue;
+				        }
+				
+				        // 2. raw decoding of current token ID in order to check whitespaces and punctuations
+				        const rawSingle = tokenizer.decode([tokenId], {//this is the original word chunk as 'seen' by GreBerta
+				            skip_special_tokens: false,
+				            clean_up_tokenization_spaces: false
+				        });
+				        
+				        //console.log(rawSingle);
+				
+				        if (!rawSingle) {
+				            continue;
+				        }
+				
+				        const trimmedSingle = rawSingle.trim();
+				        if (!trimmedSingle) {
+				            continue;
+				        }
+				
+				        // 3. prediction confidence (score) post-processing core
+				        const probs = softmax(logits2D[idx]);
+				        let labelId = 0;
+				        for (let j = 1; j < probs.length; j++) {
+				            if (probs[j] > probs[labelId]) {
+				                labelId = j;
+				            }
+				        }
+				        //console.log(model.config);
+				        const labelXpos = model.config.id2label? model.config.id2label[labelId] : "LABEL_"+labelId;
+				        const score = probs[labelId];
+				        //console.log(labelXpos, score);
+				        
+				        if (alsoOriginal) original.push({
+							entity: labelXpos,
+							score: score,
+							index: idx,
+							word: rawSingle
+						});
+				
+				        // 4. if the current token is punctuation...
+				        const isPunctuation = punctuationRegex.test(trimmedSingle);
+				
+				        if (isPunctuation) {
+				            flushCurrentWord();//... pushes the current full word (without current punctuation) into the "words" array,...
+				            words.push({//... then, pushes into the "words" array the current punctuation token
+				                word: trimmedSingle,
+				                entity: labelXpos,
+				                score: score
+				            });
+				            continue;
+				        }
+				
+				        // 5. if the current token is the beginning of a new word (starts with whitespace or it is the first absolute token)...
+				        const isNewWord = rawSingle.startsWith(" ") || currentWordTokens.length === 0;
+				
+				        if (isNewWord) {
+				            flushCurrentWord();
+				            currentWordTokens = [tokenId];
+				            currentWordXpos = labelXpos;
+				            currentWordScore = score;
+				        } else {
+				            currentWordTokens.push(tokenId);
+				            //console.log(currentWordXpos, labelXpos, currentWordScore, score);
+				            if (currentWordScore > score) currentWordXpos = labelXpos;//gets the xpos of the token with the currently lowest score
+				            currentWordScore = Math.min(currentWordScore, score);
+				        }
+				    }
+				
+				    // Pushes the latest full word into the "words" array
+				    flushCurrentWord();
+				
+				    return original.length? {"ORIGINAL": original, "WITH RE-AGGREGATED WORDS": words} : words;
+				}
+			
+			    // 5. Process both batch items and combine results
+			    const nativeBatch = getBatchItem(0);
+			    const spacedBatch = getBatchItem(1);
+			
+			    const wordsNative = processLogits(nativeBatch.logits2D, nativeBatch.ids1D, 1);
+			    const wordsSpaced = processLogits(spacedBatch.logits2D, spacedBatch.ids1D, 0);
+			
+			    if (wordsNative.length > 0 && wordsSpaced.length > 0) {
+			        finalResults.push(wordsNative[0]);
+			        finalResults.push(...wordsSpaced.slice(1));
+			    } else {
+			        finalResults = wordsNative;
+			    }
+		    }
+			
+		    //console.log(finalResults);
+		    return finalResults;
+		}
+
+	   document.body.onload = () => {
+	    	document.getElementById("text").textContent = "μῆνιν ἄειδε, θεὰ, Πηληϊάδεω Ἀχιλῆος";
+	    	document.getElementById("version").lastChild.textContent = env.version;
+	    	document.getElementById("analyze").onclick = async()=>{
+	    		const resultDiv = document.getElementById("result"),
+	    			resultDiv2 = document.getElementById("result2"),
+	    			result = await test(document.getElementById("text").value, document.getElementById("model").value);
+	    		if (result.ORIGINAL) {
+		    		let resStr = JSON.stringify(result.ORIGINAL, null, "  "),
+		    			resStr2 = JSON.stringify(result["WITH RE-AGGREGATED WORDS"], null, "  ");
+		    		if (!document.getElementById("result_types")) {
+			    		let div0 = document.createElement("DIV"),
+			    			div1 = document.createElement("DIV"),
+			    			div2 = document.createElement("DIV");
+			    		div0.id = "result_types";
+			    		div1.textContent = "ORIGINAL:";
+			    		div2.textContent = "WITH RE-AGGREGATED WORDS:";
+			    		resultDiv.parentNode.before(div0);
+			    		div0.append(div1, div2);
+		    		}
+	    			resultDiv.textContent = resStr;
+	    			resultDiv2.textContent = resStr2;
+	    		}
+	    		else {
+		    		let resStr = JSON.stringify(result, null, "  ");
+		    		resultDiv.textContent = "";
+		    		resultDiv2.textContent = resStr;
+	    		}
+	    		resultDiv.parentElement.scrollTop = 0;
+	    	}
+	    }
+    </script>
+  </body>
+</html>
