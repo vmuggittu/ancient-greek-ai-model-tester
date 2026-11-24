@@ -1,0 +1,3 @@
+Python scripts:
+trainer.py: fine-tunes the original GreBERTa model hosted in https://huggingface.co/bowphs/GreBerta;
+pipeline.py: interrogates the model in local Python environment.
