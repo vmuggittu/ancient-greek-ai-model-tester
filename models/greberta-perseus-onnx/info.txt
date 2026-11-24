@@ -1,0 +1,2 @@
+local path of reference model files.
+WARNING: Transformers.js looks for a subsequent subfolder /onnx/ by default
