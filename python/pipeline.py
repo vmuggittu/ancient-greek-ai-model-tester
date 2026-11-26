@@ -15,8 +15,8 @@ tokenizer = AutoTokenizer.from_pretrained(
     model_name,
     local_files_only=True,
     use_fast=True,
-    add_prefix_space=False, # <--- VERY GOOD for RoBERTa-type models - BUT if =False RETURNS μῆνιν CORRECT AND ἄειδε WRONG, if =True THE OPPOSITE!
-    model_max_length=128         # max limit acceepted from model
+    add_prefix_space=False, # <--- VERY GOOD for RoBERTa-type models - BUT add_prefix_space=False RETURNS μῆνιν CORRECT AND ἄειδε WRONG, add_prefix_space=True RETURNS THE OPPOSITE!
+    model_max_length=128         # max limit accepted from model
     #truncation=True,
     #clean_up_tokenization_spaces=True #NB: if clean_up_tokenization_spaces=True the tokenizer treats the submitted text as a single word :( but its behavior is irregular!
 )
