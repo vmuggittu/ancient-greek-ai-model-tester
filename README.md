@@ -26,3 +26,24 @@ If you use this work, please cite the following paper:
 	year = {2026},
 }
 ```
+
+
+## An Italian version of the paper is also available:  
+## APA:
+
+> Muggittu, V. (2026). Demistificare le IA grazie al Greco Antico: L’Odissea di un utente comune.
+> [https://doi.org/10.13140/RG.2.2.16239.06568](https://doi.org/10.13140/RG.2.2.16239.06568)
+
+## BibTeX:
+
+```
+@book{muggittu_demistificare_2026,
+	title = {Demistificare le {IA} grazie al {Greco} {Antico}: l'{Odissea} di un utente comune},
+	shorttitle = {Demistificare le {IA} grazie al {Greco} {Antico}},
+	doi = {10.13140/RG.2.2.16239.06568},
+	abstract = {Un 'utente comune' può 'farsi in casa' una IA capace di analizzare il Greco Antico? Un'Odissea che parte dal modello IA GreBERTa e Transformers.js tenta una risposta a questa domanda... ed apre il Vaso di Pandora? "Libera" traduzione italiana di "Demystifying AIs thanks to Ancient Greek: the Odyssey of an ordinary user".},
+	author = {Muggittu, Vincenzo},
+	month = nov,
+	year = {2026},
+}
+```
