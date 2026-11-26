@@ -10,16 +10,19 @@ Full details in paper below.
 If you use this work, please cite the following paper:
 
 ## APA:
+
 > Muggittu, V. (2026). Demystifying AIs thanks to Ancient Greek: The Odyssey of an ordinary user.
 > [https://doi.org/10.13140/RG.2.2.22949.95204](https://doi.org/10.13140/RG.2.2.22949.95204)
 ## BibTeX:
 
-> @book{muggittu_demystifying_2026,  
->	title = {Demystifying {AIs} thanks to {Ancient} {Greek}: the {Odyssey} of an ordinary user},  
->	shorttitle = {Demystifying {AIs} thanks to {Ancient} {Greek}},  
->	doi = {10.13140/RG.2.2.22949.95204},  
->	abstract = {Nowadays, anyone who wants to develop and transmit an authentic, human and healthy mass culture about AIs and through AIs must deal with many limitations and mystifications. How can we overcome all this? I claim that today's relationship between Ancient Greek and AI is enlightening: the Odyssey that I am going to report offers us perfect examples, ideas and warnings.},  
->	author = {Muggittu, Vincenzo},  
->	month = nov,  
->	year = {2026},  
-> }
+
+```@book{muggittu_demystifying_2026,
+	title = {Demystifying {AIs} thanks to {Ancient} {Greek}: the {Odyssey} of an ordinary user},
+	shorttitle = {Demystifying {AIs} thanks to {Ancient} {Greek}},
+	doi = {10.13140/RG.2.2.22949.95204},
+	abstract = {Nowadays, anyone who wants to develop and transmit an authentic, human and healthy mass culture about AIs and through AIs must deal with many limitations and mystifications. How can we overcome all this? I claim that today's relationship between Ancient Greek and AI is enlightening: the Odyssey that I am going to report offers us perfect examples, ideas and warnings.},
+	author = {Muggittu, Vincenzo},
+	month = nov,
+	year = {2026},
+}
+```
