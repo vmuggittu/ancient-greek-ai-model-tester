@@ -14,7 +14,7 @@ If you use this work, please cite the following paper:
 > [https://doi.org/10.13140/RG.2.2.22949.95204](https://doi.org/10.13140/RG.2.2.22949.95204)
 ## BibTeX:
 
-@book{muggittu_demystifying_2026,  
+> @book{muggittu_demystifying_2026,  
 >	title = {Demystifying {AIs} thanks to {Ancient} {Greek}: the {Odyssey} of an ordinary user},  
 >	shorttitle = {Demystifying {AIs} thanks to {Ancient} {Greek}},  
 >	doi = {10.13140/RG.2.2.22949.95204},  
