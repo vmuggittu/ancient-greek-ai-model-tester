@@ -7,13 +7,13 @@ from transformers import (
 
 # 1. Define Ancient Greek sample text (Homer, Iliad 1.1) , model, tokenizer, settings, pipeline
 text = "μῆνιν ἄειδε, θεὰ, Πηληϊάδεω Ἀχιλῆος " #seeems to work better with this punctuation
-model_name="models/greberta-finetuned-perseus"
+model_name="models/greberta-finetuned-perseus" #local. Hugging Face ID are accepted by default
 #model_name="models/greberta-finetuned-perseus-onnx"
 
 # 2. Define the tokenizer
 tokenizer = AutoTokenizer.from_pretrained(
     model_name,
-    local_files_only=True,
+    local_files_only=True, #not default. Disable to use models hosted by Hugging Face
     use_fast=True,
     add_prefix_space=False, # <--- VERY GOOD for RoBERTa-type models - BUT add_prefix_space=False RETURNS μῆνιν CORRECT AND ἄειδε WRONG, add_prefix_space=True RETURNS THE OPPOSITE!
     model_max_length=128         # max limit accepted from model
@@ -32,7 +32,7 @@ model = AutoModelForTokenClassification.from_pretrained(
 
 ancient_greek_pos = pipeline(
     "token-classification",
-    # local_files_only=True,
+    # local_files_only=True, #not default. Disable to use models hosted by Hugging Face
     model=model,
     tokenizer=tokenizer,
     aggregation_strategy=None  # <--- IMPORTANT: keeps raw tokens
